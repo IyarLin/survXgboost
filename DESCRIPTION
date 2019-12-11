@@ -1,0 +1,21 @@
+Package: survXgboost
+Type: Package
+Title: Full survival curve estimation using xgboost
+Version: 1.0
+Date: 2019-12-11
+Author: Iyar Lin <iyarlin@gmail.com>
+Maintainer: Iyar Lin <iyarlin@gmail.com>
+Description: The xgboost package survival objective returns predictions on the hazard ratio scale 
+  (i.e., as HR = exp(marginal_prediction) in the proportional hazard function h(t) = h0(t) * HR.
+  This quantity is equivalent to the type = "risk" in coxph.
+  This package provides a thin wrapper that enables using the xgboost package to perform full
+  survival curve estimation. 
+License: GPL-2
+Encoding: UTF-8
+LazyData: true
+Imports: 
+  xgboost (>= 0.90.0.2),   
+  survival (>= 2.44.1.1),   
+  pec (>= 2018.7.26), 
+  prodlim (>= 2018.4.18)
+RoxygenNote: 6.1.1
