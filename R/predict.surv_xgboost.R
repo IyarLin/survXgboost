@@ -16,7 +16,7 @@
 predict.surv_xgboost <- function(object, newdata, type = "risk", times = NULL) {
   if (class(newdata) == "data.frame") {
     if (any(sapply(newdata, function(newdata) any(is.na(newdata))))) stop("newdata must not contain any missing values")
-    newdata <- model.matrix(~ . - 1, data = newdata)
+    newdata <- model.matrix(as.formula(paste0("~ - 1 + ", paste0(object$feature_names, collapse = " + "))), data = newdata)
   } else if (class(newdata) == "matrix") {
     if (any(apply(newdata, 2, function(x) any(is.na(x))))) stop("newdata must not contain any missing values")
   } else {

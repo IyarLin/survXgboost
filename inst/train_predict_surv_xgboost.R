@@ -11,14 +11,11 @@ surv_xgboost_model <- xgb.train.surv(
   param_list = list(
     objective = "survival:cox",
     eval_metric = "cox-nloglik",
-    eta = 0.01 # larger eta leads to algorithm not converging, resulting in NaN predictions
+    eta = 0.05 # larger eta leads to algorithm not converging, resulting in NaN predictions
   ),
   nrounds = 1000,
   early_stopping_rounds = 10
 )
-
-x$status <- NULL
-x$time <- NULL
 
 # predict survival curves
 times <- seq(10, 1000, 50)
@@ -27,4 +24,4 @@ matplot(times, t(survival_curves[1:5, ]), type = "l")
 
 # predict risk score
 risk_scores <- predict(object = surv_xgboost_model, newdata = x, type = "risk")
-print(head(risk_scores))
+hist(risk_scores)
