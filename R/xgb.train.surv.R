@@ -91,7 +91,7 @@ xgb.train.surv <- function(x, time_var, status_var, val_frac = NULL, param_list 
 
     PredError <- pec:::pec(
       object = Models,
-      formula = Surv(time, status) ~ 1,
+      formula = as.formula(paste0("Surv(", time_var, ", ", status_var, ") ~ 1")),
       data = x,
       cens.model = "marginal",
       splitMethod = "none",
