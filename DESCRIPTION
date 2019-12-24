@@ -18,4 +18,4 @@ Imports:
   survival (>= 2.44.1.1),   
   pec (>= 2018.7.26), 
   prodlim (>= 2018.4.18)
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2

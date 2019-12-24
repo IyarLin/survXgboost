@@ -4,50 +4,63 @@
 \alias{xgb.train.surv}
 \title{Train a survival xgboost including baseline hazard}
 \usage{
-xgb.train.surv(x, time_var, status_var, val_frac = NULL,
-  param_list = NULL, nrounds, verbose = 1, print_every_n = 1L,
-  early_stopping_rounds = NULL, save_period = NULL,
-  save_name = "surv_xgboost.model", ...)
+xgb.train.surv(
+  params = list(),
+  data,
+  label,
+  nrounds,
+  watchlist = list(),
+  verbose = 1,
+  print_every_n = 1L,
+  early_stopping_rounds = NULL,
+  save_period = NULL,
+  save_name = "xgboost_surv.model",
+  xgb_model = NULL,
+  callbacks = list(),
+  ...
+)
 }
 \arguments{
-\item{x}{trainig dataset. either a data.frame or a matrix}
+\item{params}{same as in xgb.train. If provided then objective must be set to "survival:cox"
+and eval_metric must be set to "cox-nloglik"}
 
-\item{time_var}{name of variable denoting time to event}
+\item{data}{must be a covariates **matrix**}
 
-\item{status_var}{name of variable denoting event (1 - event/dead, 0 - right censored/alive)}
+\item{label}{survival label. These are survival times with negative magnitude for censored
+cases (so a case where someone survived 10 days and hasn't died yet would be coded as -10)}
 
-\item{val_frac}{fraction of training data set aside for validation in case early stopping rounds are used.
-If not null (numeric between 0 and 1) then \code{early_stopping_rounds} should also be set}
+\item{nrounds}{same as in xgb.train}
 
-\item{param_list}{parameter list passed to xgboost. If null (default) then objective is set
-to \code{survival:cox} and eval_metric is set to \code{cox-nloglik}}
+\item{watchlist}{same as in xgb.train. This can be tricky, see example}
 
-\item{nrounds}{same as in \code{xgb.train}}
+\item{verbose}{same as in xgb.train}
 
-\item{verbose}{same as in \code{xgb.train}}
+\item{print_every_n}{same as in xgb.train}
 
-\item{print_every_n}{same as in \code{xgb.train}}
+\item{early_stopping_rounds}{same as in xgb.train}
 
-\item{early_stopping_rounds}{same as in \code{xgb.train}. Should be set in case val_frac is set}
+\item{save_period}{same as in xgb.train}
 
-\item{save_period}{same as in \code{xgb.train}}
+\item{save_name}{same as in xgb.train, defaults to}
 
-\item{save_name}{same as in \code{xgb.train}, though default is different}
+\item{xgb_model}{same as in xgb.train}
 
-\item{...}{more arguments to be passed to the underlying xgboost function call}
+\item{callbacks}{same as in xgb.train}
+
+\item{...}{additional arguments passed to xgb.train}
 }
 \value{
-an object of class \code{surv_xgboost}
+an object of class \code{xgb.Booster.surv}
 }
 \description{
 \code{xgb.train.surv} is a thin wrapper around \code{xgboost::xgb.train} that
-produces a \code{surv_xgboost} object. This object has a predict method that enables full
+produces a \code{xgb.Booster.surv} object. This object has a predict method that enables full
 survival curve prediction in addition to the usual relative risk score predictions.
 }
 \details{
 The xgboost package supports the cox proportional hazards model but the predict method
 returns only the risk score (which is equivalent to \eqn{exp(X\beta)} or \code{type = "risk"} in \code{survival::coxph}).
-This function returns a \code{surv_xgboost} object which enables prediction of both the risk score as well
+This function returns a \code{xgb.Booster.surv} object which enables prediction of both the risk score as well
 the entire survival curve. Baseline hazard rate is obtained using the \code{survival::basehaz} function
 which is then scaled to fit the original baseline hazard computed (but not returned) by the \code{xgboost::xgb.train} function
 }
@@ -55,34 +68,37 @@ which is then scaled to fit the original baseline hazard computed (but not retur
 library(survival)
 data("lung")
 library(survXgboost)
-x <- lung[complete.cases(lung), ] # doesn't handle missing values at the moment
-x$status <- x$status - 1 # format status variable correctly such that 1 is event/death and 0 is censored/alive
+library(xgboost)
+lung <- lung[complete.cases(lung), ] # doesn't handle missing values at the moment
+lung$status <- lung$status - 1 # format status variable correctly such that 1 is event/death and 0 is censored/alive
+label <- ifelse(lung$status == 1, lung$time, -lung$time)
+
+val_ind <- sample.int(nrow(lung), 0.1 * nrow(lung))
+x_train <- as.matrix(lung[-val_ind, !names(lung) \%in\% c("time", "status")])
+x_label <- label[-val_ind]
+x_val <- xgb.DMatrix(as.matrix(lung[val_ind, !names(lung) \%in\% c("time", "status")]),
+                     label = label[val_ind])
 
 # train surv_xgboost
 surv_xgboost_model <- xgb.train.surv(
-  x = x, time_var = "time", status_var = "status",
-  val_frac = 0.1,
-  param_list = list(
+  params = list(
     objective = "survival:cox",
     eval_metric = "cox-nloglik",
-    eta = 0.01 # larger eta leads to algorithm not converging, resulting in NaN predictions
-  ),
-  nrounds = 1000,
-  early_stopping_rounds = 10
+    eta = 0.05 # larger eta leads to algorithm not converging, resulting in NaN predictions
+  ), data = x_train, label = x_label,
+  watchlist = list(val2 = x_val),
+  nrounds = 1000, early_stopping_rounds = 30
 )
-
-x$status <- NULL
-x$time <- NULL
 
 # predict survival curves
 times <- seq(10, 1000, 50)
-survival_curves <- predict(object = surv_xgboost_model, newdata = x, type = "surv", times = times)
+survival_curves <- predict(object = surv_xgboost_model, newdata = x_train, type = "surv", times = times)
 matplot(times, t(survival_curves[1:5, ]), type = "l")
 
 # predict risk score
-risk_scores <- predict(object = surv_xgboost_model, newdata = x, type = "risk")
-print(head(risk_scores))
+risk_scores <- predict(object = surv_xgboost_model, newdata = x_train, type = "risk")
+hist(risk_scores)
 }
 \seealso{
-\code{\link{predict.surv_xgboost}}
+\code{\link{predict.xgb.Booster.surv}}
 }
