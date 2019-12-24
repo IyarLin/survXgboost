@@ -84,6 +84,11 @@ xgb.train.surv <- function(x, time_var, status_var, val_frac = NULL, param_list 
   HR <- xgboost:::predict.xgb.Booster(object = xgboost_model, newdata = x_mat_DMatrix)
   baseline_pred <- function(const) {
     risk <- HR * const
+    if(baseline_hazard[1, 2] == 0){
+      surv <- exp(risk %*% -matrix(baseline_hazard[, 1]), nrow = 1)
+    } else { # pec always requests time = 0 survival as well
+      surv <- exp(risk %*% -matrix(c(0, baseline_hazard[, 1]), nrow = 1))
+    }
     surv <- exp(risk %*% -matrix(c(0, baseline_hazard[, 1]), nrow = 1))
     Models <- list(
       "xgboost" = surv
