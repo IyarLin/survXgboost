@@ -8,6 +8,7 @@
 #' @param data must be a covariates **matrix**
 #' @param label survival label. These are survival times with negative magnitude for censored
 #' cases (so a case where someone survived 10 days and hasn't died yet would be coded as -10)
+#' @param weight (optional) weight vector for training samples
 #' @param nrounds same as in xgb.train
 #' @param watchlist same as in xgb.train. This can be tricky, see example
 #' @param verbose same as in xgb.train
@@ -29,7 +30,8 @@
 #' @importFrom prodlim Hist
 #' @export
 
-xgb.train.surv <- function(params = list(), data, label, nrounds, watchlist = list(), verbose = 1, print_every_n = 1L,
+xgb.train.surv <- function(params = list(), data, label, weight = NULL, nrounds,
+                           watchlist = list(), verbose = 1, print_every_n = 1L,
                            early_stopping_rounds = NULL, save_period = NULL,
                            save_name = "xgboost_surv.model", xgb_model = NULL, callbacks = list(), ...) {
   if (length(params) > 0) {
@@ -42,7 +44,9 @@ xgb.train.surv <- function(params = list(), data, label, nrounds, watchlist = li
     )
   }
 
-  data_DMatrix <- xgboost:::xgb.DMatrix(data = data, label = label)
+  if(is.null(weight)) weight <- rep(1, nrow(data))
+
+  data_DMatrix <- xgboost:::xgb.DMatrix(data = data, label = label, weight = weight)
 
   xgboost_model <- xgboost:::xgb.train(
     params = params, data = data_DMatrix, nrounds = nrounds, watchlist = watchlist, verbose = verbose,
