@@ -8,6 +8,7 @@ xgb.train.surv(
   params = list(),
   data,
   label,
+  weight = NULL,
   nrounds,
   watchlist = list(),
   verbose = 1,
@@ -28,6 +29,8 @@ and eval_metric must be set to "cox-nloglik"}
 
 \item{label}{survival label. These are survival times with negative magnitude for censored
 cases (so a case where someone survived 10 days and hasn't died yet would be coded as -10)}
+
+\item{weight}{(optional) weight vector for training samples}
 
 \item{nrounds}{same as in xgb.train}
 
