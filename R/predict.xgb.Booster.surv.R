@@ -53,7 +53,7 @@ predict.xgb.Booster.surv <- function(object, newdata, type = "risk", times = NUL
         c_0 <- pmax(0, unlist(c_0, use.names=FALSE) - c_0_conditional_after)
         surv <- append(surv, exp(risk[i] * -1.0 * c_0))
       }
-      surv <- matrix(surv, nrow = n)
+      surv <- matrix(surv, nrow = n, byrow = TRUE)
     } else {
       surv <- exp(risk %*% -matrix(object$baseline_hazard[, 1], nrow = 1))
     }
