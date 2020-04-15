@@ -51,7 +51,7 @@ predict.xgb.Booster.surv <- function(object, newdata, type = "risk", times = NUL
         c_0 <- interpolate_at_times(baseline_hazard, times_to_evaluate_at)
         c_0_conditional_after <- unlist(c_0[1], use.names=FALSE)
         c_0 <- pmax(0, unlist(c_0, use.names=FALSE) - c_0_conditional_after)
-        surv <- append(surv, exp(risk[i] * -1.0 * c_0))
+        surv <- append(surv, exp(risk[i] * -1.0 * c_0[i]))
       }
       surv <- matrix(surv, nrow = n)
     } else {
