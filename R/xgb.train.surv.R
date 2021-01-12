@@ -62,14 +62,14 @@ xgb.train.surv <- function(params = list(), data, label, weight = NULL, nrounds,
   #baseline_hazard <- survival:::basehaz(cox_model)
   
   #Cox fixed
-  #cox_model <- survival:::coxph(formula = Surv(time, status) ~ 1, data = data_data.frame)
-  #baseline_hazard <- survival:::basehaz(cox_model)
+  cox_model <- survival:::coxph(formula = Surv(time, status) ~ 1, data = data_data.frame)
+  baseline_hazard <- survival:::basehaz(cox_model)
   
   #Nelson-Aalen
-  surv_fit <- survival:::survfit(formula = Surv(time, status) ~ 1, data = data_data.frame)
-  h.sort.of <- surv_fit$n.event / surv_fit$n.risk
-  baseline_hazard <- cumsum(h.sort.of)
-  baseline_hazard <- c(ch, tail(ch, 1))
+  #surv_fit <- survival:::survfit(formula = Surv(time, status) ~ 1, data = data_data.frame)
+  #h.sort.of <- surv_fit$n.event / surv_fit$n.risk
+  #baseline_hazard <- cumsum(h.sort.of)
+  #baseline_hazard <- c(ch, tail(ch, 1))
 
   if (baseline_hazard[1, 2] != 0) {
     baseline_hazard <- rbind(c(0, 0), baseline_hazard) # pec always requests time = 0 survival as well
