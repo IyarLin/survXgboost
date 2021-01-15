@@ -13,7 +13,7 @@
 #' @seealso \code{\link{xgb.train.surv}}
 #' @export
 
-predict.xgb.Booster.surv <- function(object, newdata, plan_length, type = "risk") {
+predict.xgb.Booster.surv <- function(object, newdata, type = "risk") {
   class(object) <- "xgb.Booster"
   risk <- xgboost:::predict.xgb.Booster(object, newdata)
   if (type == "risk") {
@@ -22,8 +22,7 @@ predict.xgb.Booster.surv <- function(object, newdata, plan_length, type = "risk"
     a <- object$a
     b <- object$b
     pred <- exp(a + b * log(risk))
-    pred_rounded <- round(pred / plan_length) * plan_length
-    return(pred_rounded)
+    return(pred)
   } else {
     stop('type must be one of "risk", "age"')
   }
