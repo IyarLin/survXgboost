@@ -13,7 +13,7 @@
 #' @seealso \code{\link{xgb.train.surv}}
 #' @export
 
-predict.xgb.Booster.surv <- function(object, newdata, type = "risk", plan_length, times = NULL) {
+predict.xgb.Booster.surv <- function(object, newdata, plan_length, type = "risk") {
   class(object) <- "xgb.Booster"
   risk <- xgboost:::predict.xgb.Booster(object, newdata)
   if (type == "risk") {
