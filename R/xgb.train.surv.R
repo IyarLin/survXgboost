@@ -30,7 +30,7 @@
 #' @importFrom prodlim Hist
 #' @export
 
-xgb.train.surv <- function(params = list(), data, label, weight = NULL, nrounds,
+xgb.train.surv <- function(params = list(), data, label, data_churn, label_churn, weight = NULL, nrounds,
                            watchlist = list(), verbose = 1, print_every_n = 1L,
                            early_stopping_rounds = NULL, save_period = NULL,
                            save_name = "xgboost_surv.model", xgb_model = NULL, callbacks = list(), ...) {
@@ -53,55 +53,21 @@ xgb.train.surv <- function(params = list(), data, label, weight = NULL, nrounds,
     print_every_n = print_every_n, early_stopping_rounds = early_stopping_rounds, save_period = save_period,
     save_name = "surv_xgboost.model", xgb_model = xgb_model, callbacks = callbacks, ...
   )
-
-
-  # generate baseline hazard
-  data_data.frame <- data.frame(data, time = abs(label), status = ifelse(sign(label) == 1, 1, 0))
-
-  #cox_model <- survival:::coxph(formula = Surv(time, status) ~ ., data = data_data.frame)
-  #baseline_hazard <- survival:::basehaz(cox_model)
   
-  #Cox fixed
-  cox_model <- survival:::coxph(formula = Surv(time, status) ~ 1, data = data_data.frame)
-  baseline_hazard <- survival:::basehaz(cox_model)
+  weight_churn <- rep(1, nrow(data_churn))
+  data_churn_DMatrix <- xgboost:::xgb.DMatrix(data = data_churn, label = label_churn, weight = rep(1, nrow(data_churn)))
   
-  #Nelson-Aalen
-  #surv_fit <- survival:::survfit(formula = Surv(time, status) ~ 1, data = data_data.frame)
-  #h.sort.of <- surv_fit$n.event / surv_fit$n.risk
-  #baseline_hazard <- cumsum(h.sort.of)
-  #baseline_hazard <- c(ch, tail(ch, 1))
+  y_churn_pred <- xgboost:::predict.xgb.Booster(object = xgboost_model, newdata = data_churn_DMatrix)
+  y_churn_true <- label_churn
 
-  if (baseline_hazard[1, 2] != 0) {
-    baseline_hazard <- rbind(c(0, 0), baseline_hazard) # pec always requests time = 0 survival as well
-  }
-
-  HR <- xgboost:::predict.xgb.Booster(object = xgboost_model, newdata = data_DMatrix)
-  baseline_pred <- function(const) {
-    risk <- HR * const
-    surv <- exp(risk %*% -matrix(baseline_hazard[, 1], nrow = 1))
-
-    Models <- list(
-      "xgboost" = surv
-    )
-
-    PredError <- pec:::pec(
-      object = Models,
-      formula = Surv(time, status) ~ 1,
-      data = data_data.frame,
-      cens.model = "marginal",
-      splitMethod = "none",
-      times = baseline_hazard[, 2],
-      exact = F,
-      verbose = F,
-      reference = F
-    )
-
-    return(pec:::crps(PredError))
-  }
-
-  optimal_const <- optim(par = 1, fn = baseline_pred, method = "Brent", lower = 0, upper = 10)
-  baseline_hazard[, 1] <- baseline_hazard[, 1] * optimal_const$par
-  xgboost_model$baseline_hazard <- baseline_hazard
+  reg <- lm(log(y_churn_true) ~ log(y_churn_pred))
+  a <- reg$coefficients[['(Intercept)']]
+  b <- reg$coefficients[['log(y_churn_pred)']]
+  
+  xgboost_model$a <- a
+  xgboost_model$b <- b
+  xgboost_model$prediction_formula <- "exp(a + b * log(HR))"
+  
   class(xgboost_model) <- "xgb.Booster.surv"
   return(xgboost_model)
 }
