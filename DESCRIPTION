@@ -1,7 +1,7 @@
 Package: survXgboost
 Type: Package
 Title: Full survival curve estimation using xgboost
-Version: 1.1
+Version: 1.0
 Date: 2019-12-11
 Author: Iyar Lin <iyarlin@gmail.com>
 Maintainer: Iyar Lin <iyarlin@gmail.com>
