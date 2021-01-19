@@ -5,9 +5,10 @@
 #' or the full survival curve.
 #' @param object an xgb.Booster.surv object obtained by \code{xgb.train.surv}
 #' @param newdata a data.frame/matrix to make predictions for
-#' @param type either "risk" or "age"
+#' @param type either "risk" or "surv"
 #' @param times times at which to estimate the survival curve at. Default is original dataset unique death times.
-#' @return for \code{type = "risk"} a vector of risk scores, for \code{type = "age"}.
+#' @return for \code{type = "risk"} a vector of risk scores, for \code{type = "surv"} a matrix with
+#' columns corresponding to times and rows corresponding to input newdata rows.
 #' @example inst/train_predict_xgb.Booster.surv.R
 #' @seealso \code{\link{xgb.train.surv}}
 #' @export
