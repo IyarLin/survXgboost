@@ -14,7 +14,6 @@
 #' @export
 
 predict.xgb.Booster.surv <- function(object, newdata, type = "risk", times = NULL) {
-  class(object) <- "xgb.Booster"
   risk <- xgboost:::predict.xgb.Booster(object, newdata)
   if (type == "risk") {
     return(risk)

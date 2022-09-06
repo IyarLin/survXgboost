@@ -92,6 +92,6 @@ xgb.train.surv <- function(params = list(), data, label, weight = NULL, nrounds,
   optimal_const <- optim(par = 1, fn = baseline_pred, method = "Brent", lower = 0, upper = 10)
   baseline_hazard[, 1] <- baseline_hazard[, 1] * optimal_const$par
   xgboost_model$baseline_hazard <- baseline_hazard
-  class(xgboost_model) <- "xgb.Booster.surv"
+  class(xgboost_model) <- c("xgb.Booster.surv", "xgb.Booster")
   return(xgboost_model)
 }
