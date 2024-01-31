@@ -27,7 +27,6 @@
 #' This function returns a \code{xgb.Booster.surv} object which enables prediction of both the risk score as well
 #' the entire survival curve. Baseline hazard rate is obtained using the \code{survival::basehaz} function
 #' which is then scaled to fit the original baseline hazard computed (but not returned) by the \code{xgboost::xgb.train} function
-#' @importFrom prodlim Hist
 #' @export
 
 xgb.train.surv <- function(params = list(), data, label, weight = NULL, nrounds,
@@ -53,45 +52,13 @@ xgb.train.surv <- function(params = list(), data, label, weight = NULL, nrounds,
     print_every_n = print_every_n, early_stopping_rounds = early_stopping_rounds, save_period = save_period,
     save_name = "surv_xgboost.model", xgb_model = xgb_model, callbacks = callbacks, ...
   )
-
-
+  
   # generate baseline hazard
   data_data.frame <- data.frame(data, time = abs(label), status = ifelse(sign(label) == 1, 1, 0))
-
-  cox_model <- survival:::coxph(formula = Surv(time, status) ~ ., data = data_data.frame)
-  baseline_hazard <- survival:::basehaz(cox_model)
-
-  if (baseline_hazard[1, 2] != 0) {
-    baseline_hazard <- rbind(c(0, 0), baseline_hazard) # pec always requests time = 0 survival as well
-  }
-
-  HR <- xgboost:::predict.xgb.Booster(object = xgboost_model, newdata = data_DMatrix)
-  baseline_pred <- function(const) {
-    risk <- HR * const
-    surv <- exp(risk %*% -matrix(baseline_hazard[, 1], nrow = 1))
-
-    Models <- list(
-      "xgboost" = surv
-    )
-
-    PredError <- pec:::pec(
-      object = Models,
-      formula = Surv(time, status) ~ 1,
-      data = data_data.frame,
-      cens.model = "marginal",
-      splitMethod = "none",
-      times = baseline_hazard[, 2],
-      exact = F,
-      verbose = F,
-      reference = F
-    )
-
-    return(pec:::crps(PredError))
-  }
-
-  optimal_const <- optim(par = 1, fn = baseline_pred, method = "Brent", lower = 0, upper = 10)
-  baseline_hazard[, 1] <- baseline_hazard[, 1] * optimal_const$par
-  xgboost_model$baseline_hazard <- baseline_hazard
+  
+  breslow_estimate <- survival:::survfit(formula = Surv(time, status) ~ 1, data = data_data.frame, stype = 2)
+  
+  xgboost_model$baseline_hazard <- data.frame(hazard = breslow_estimate$cumhaz, time = breslow_estimate$time)
   class(xgboost_model) <- c("xgb.Booster.surv", "xgb.Booster")
   return(xgboost_model)
 }
