@@ -1,10 +1,10 @@
 survXgboost package
 ================
 Iyar Lin
-08 May, 2021
+01 February, 2024
 
 The xgboost package survival model returns predictions on the hazard
-ratio scale (i.e., as $HR = exp(marginal\_prediction) in the
+ratio scale (i.e., as \$HR = exp(marginal_prediction) in the
 proportional hazard function
 ![h(t) = h0(t) \* HR](https://latex.codecogs.com/png.latex?h%28t%29%20%3D%20h0%28t%29%20%2A%20HR "h(t) = h0(t) * HR").
 This quantity is equivalent to the type = “risk” in coxph. This package
@@ -20,9 +20,9 @@ Below is a short usage demo.
 First, prepare the data:
 
 ``` r
-pacman::p_load_gh("IyarLin/survXgboost")
-pacman::p_load("survival")
-pacman::p_load("xgboost")
+library(survXgboost)
+library(survival)
+library(xgboost)
 data("lung")
 lung <- lung[complete.cases(lung), ] # doesn't handle missing values at the moment
 lung$status <- lung$status - 1 # format status variable correctly such that 1 is event/death and 0 is censored/alive
@@ -51,41 +51,41 @@ surv_xgboost_model <- xgb.train.surv(
 )
 ```
 
-    ## [1]  val2-cox-nloglik:1.986376 
+    ## [1]  val2-cox-nloglik:1.986334 
     ## Will train until val2_cox_nloglik hasn't improved in 30 rounds.
     ## 
-    ## [2]  val2-cox-nloglik:1.988221 
-    ## [3]  val2-cox-nloglik:2.006994 
-    ## [4]  val2-cox-nloglik:2.009742 
-    ## [5]  val2-cox-nloglik:2.017754 
-    ## [6]  val2-cox-nloglik:2.005852 
-    ## [7]  val2-cox-nloglik:2.007489 
-    ## [8]  val2-cox-nloglik:2.021023 
-    ## [9]  val2-cox-nloglik:2.024065 
-    ## [10] val2-cox-nloglik:2.025870 
-    ## [11] val2-cox-nloglik:2.029826 
-    ## [12] val2-cox-nloglik:2.033544 
-    ## [13] val2-cox-nloglik:2.037451 
-    ## [14] val2-cox-nloglik:2.038593 
-    ## [15] val2-cox-nloglik:2.047226 
-    ## [16] val2-cox-nloglik:2.053159 
-    ## [17] val2-cox-nloglik:2.062115 
-    ## [18] val2-cox-nloglik:2.070519 
-    ## [19] val2-cox-nloglik:2.076890 
-    ## [20] val2-cox-nloglik:2.077382 
-    ## [21] val2-cox-nloglik:2.083448 
-    ## [22] val2-cox-nloglik:2.086909 
-    ## [23] val2-cox-nloglik:2.094228 
-    ## [24] val2-cox-nloglik:2.100391 
-    ## [25] val2-cox-nloglik:2.104610 
-    ## [26] val2-cox-nloglik:2.122741 
-    ## [27] val2-cox-nloglik:2.125863 
-    ## [28] val2-cox-nloglik:2.128895 
-    ## [29] val2-cox-nloglik:2.132794 
-    ## [30] val2-cox-nloglik:2.136503 
-    ## [31] val2-cox-nloglik:2.147271 
+    ## [2]  val2-cox-nloglik:1.988136 
+    ## [3]  val2-cox-nloglik:1.999317 
+    ## [4]  val2-cox-nloglik:2.000369 
+    ## [5]  val2-cox-nloglik:2.011067 
+    ## [6]  val2-cox-nloglik:1.999203 
+    ## [7]  val2-cox-nloglik:2.000823 
+    ## [8]  val2-cox-nloglik:2.014079 
+    ## [9]  val2-cox-nloglik:2.015103 
+    ## [10] val2-cox-nloglik:2.016976 
+    ## [11] val2-cox-nloglik:2.020993 
+    ## [12] val2-cox-nloglik:2.024742 
+    ## [13] val2-cox-nloglik:2.027878 
+    ## [14] val2-cox-nloglik:2.034186 
+    ## [15] val2-cox-nloglik:2.042607 
+    ## [16] val2-cox-nloglik:2.046746 
+    ## [17] val2-cox-nloglik:2.052691 
+    ## [18] val2-cox-nloglik:2.063710 
+    ## [19] val2-cox-nloglik:2.074147 
+    ## [20] val2-cox-nloglik:2.072881 
+    ## [21] val2-cox-nloglik:2.084827 
+    ## [22] val2-cox-nloglik:2.089368 
+    ## [23] val2-cox-nloglik:2.104786 
+    ## [24] val2-cox-nloglik:2.113672 
+    ## [25] val2-cox-nloglik:2.122862 
+    ## [26] val2-cox-nloglik:2.129615 
+    ## [27] val2-cox-nloglik:2.127782 
+    ## [28] val2-cox-nloglik:2.132626 
+    ## [29] val2-cox-nloglik:2.135991 
+    ## [30] val2-cox-nloglik:2.140200 
+    ## [31] val2-cox-nloglik:2.144522 
     ## Stopping. Best iteration:
-    ## [1]  val2-cox-nloglik:1.986376
+    ## [1]  val2-cox-nloglik:1.986334
 
 Next we can predict full survival curves:
 

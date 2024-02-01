@@ -26,9 +26,9 @@ Below is a short usage demo.
 First, prepare the data:
 
 ```{r}
-pacman::p_load_gh("IyarLin/survXgboost")
-pacman::p_load("survival")
-pacman::p_load("xgboost")
+library(survXgboost)
+library(survival)
+library(xgboost)
 data("lung")
 lung <- lung[complete.cases(lung), ] # doesn't handle missing values at the moment
 lung$status <- lung$status - 1 # format status variable correctly such that 1 is event/death and 0 is censored/alive
