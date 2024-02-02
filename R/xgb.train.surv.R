@@ -61,7 +61,7 @@ xgb.train.surv <- function(params = list(), data, label, weight = NULL, nrounds,
 
   xgboost_model$mean_prediction <- mean(predict(xgboost_model, data_DMatrix, outputmargin = TRUE))
 
-  xgboost_model$baseline_hazard <- data.frame(hazard = breslow_estimate$cumhaz, time = breslow_estimate$time)
+  xgboost_model$baseline_hazard <- data.frame(hazard = c(0, breslow_estimate$cumhaz), time = c(0, breslow_estimate$time))
   class(xgboost_model) <- c("xgb.Booster.surv", "xgb.Booster")
   return(xgboost_model)
 }
