@@ -1,7 +1,7 @@
 survXgboost package
 ================
 Iyar Lin
-01 February, 2024
+02 februari, 2024
 
 The xgboost package survival model returns predictions on the hazard
 ratio scale (i.e., as \$HR = exp(marginal_prediction) in the
@@ -13,7 +13,7 @@ perform full survival curve estimation.
 
 See also
 [discussion](https://datascience.stackexchange.com/questions/65266/how-do-i-predict-survival-curves-using-xgboost)
-in stackoverflow overflow
+in stackoverflow
 
 Below is a short usage demo.
 
@@ -55,35 +55,35 @@ surv_xgboost_model <- xgb.train.surv(
     ## Will train until val2_cox_nloglik hasn't improved in 30 rounds.
     ## 
     ## [2]  val2-cox-nloglik:1.988136 
-    ## [3]  val2-cox-nloglik:1.999317 
-    ## [4]  val2-cox-nloglik:2.000369 
-    ## [5]  val2-cox-nloglik:2.011067 
-    ## [6]  val2-cox-nloglik:1.999203 
-    ## [7]  val2-cox-nloglik:2.000823 
-    ## [8]  val2-cox-nloglik:2.014079 
-    ## [9]  val2-cox-nloglik:2.015103 
-    ## [10] val2-cox-nloglik:2.016976 
-    ## [11] val2-cox-nloglik:2.020993 
-    ## [12] val2-cox-nloglik:2.024742 
-    ## [13] val2-cox-nloglik:2.027878 
-    ## [14] val2-cox-nloglik:2.034186 
-    ## [15] val2-cox-nloglik:2.042607 
-    ## [16] val2-cox-nloglik:2.046746 
-    ## [17] val2-cox-nloglik:2.052691 
-    ## [18] val2-cox-nloglik:2.063710 
-    ## [19] val2-cox-nloglik:2.074147 
-    ## [20] val2-cox-nloglik:2.072881 
-    ## [21] val2-cox-nloglik:2.084827 
-    ## [22] val2-cox-nloglik:2.089368 
-    ## [23] val2-cox-nloglik:2.104786 
-    ## [24] val2-cox-nloglik:2.113672 
-    ## [25] val2-cox-nloglik:2.122862 
-    ## [26] val2-cox-nloglik:2.129615 
-    ## [27] val2-cox-nloglik:2.127782 
-    ## [28] val2-cox-nloglik:2.132626 
-    ## [29] val2-cox-nloglik:2.135991 
-    ## [30] val2-cox-nloglik:2.140200 
-    ## [31] val2-cox-nloglik:2.144522 
+    ## [3]  val2-cox-nloglik:1.999648 
+    ## [4]  val2-cox-nloglik:2.000725 
+    ## [5]  val2-cox-nloglik:2.011412 
+    ## [6]  val2-cox-nloglik:2.010582 
+    ## [7]  val2-cox-nloglik:2.012655 
+    ## [8]  val2-cox-nloglik:2.025819 
+    ## [9]  val2-cox-nloglik:2.027110 
+    ## [10] val2-cox-nloglik:2.027684 
+    ## [11] val2-cox-nloglik:2.030564 
+    ## [12] val2-cox-nloglik:2.034511 
+    ## [13] val2-cox-nloglik:2.038002 
+    ## [14] val2-cox-nloglik:2.043498 
+    ## [15] val2-cox-nloglik:2.052795 
+    ## [16] val2-cox-nloglik:2.057096 
+    ## [17] val2-cox-nloglik:2.062697 
+    ## [18] val2-cox-nloglik:2.074469 
+    ## [19] val2-cox-nloglik:2.085677 
+    ## [20] val2-cox-nloglik:2.084821 
+    ## [21] val2-cox-nloglik:2.097534 
+    ## [22] val2-cox-nloglik:2.102217 
+    ## [23] val2-cox-nloglik:2.115933 
+    ## [24] val2-cox-nloglik:2.123452 
+    ## [25] val2-cox-nloglik:2.132746 
+    ## [26] val2-cox-nloglik:2.137868 
+    ## [27] val2-cox-nloglik:2.136174 
+    ## [28] val2-cox-nloglik:2.140923 
+    ## [29] val2-cox-nloglik:2.144434 
+    ## [30] val2-cox-nloglik:2.149500 
+    ## [31] val2-cox-nloglik:2.153794 
     ## Stopping. Best iteration:
     ## [1]  val2-cox-nloglik:1.986334
 
@@ -108,3 +108,34 @@ hist(risk_scores)
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+We can see the package can produce survival estimates that are well
+calibrated
+
+``` r
+if(require(riskRegression)){
+  data(cancer, package="survival")
+  status_mgus2 <- ifelse(mgus2$death == 0, -mgus2$futime, mgus2$futime)
+  # We use na.pass since XGBoost can predict for missing data
+  formula_mgus2 <-  ~ age + sex + dxyr + hgb + mspike - 1
+  x_mgus2 <- model.matrix(
+    formula_mgus2,
+    model.frame(formula_mgus2, mgus2, na.action = "na.pass")
+  )
+  # Note: this model is likely overfitting horribly, but that helps demonstrate calibration
+  mgus2_model <- xgb.train.surv(
+    params = list(
+      objective = "survival:cox",
+      eval_metric = "cox-nloglik",
+      eta = 0.2
+    ), data = x_mgus2, label = status_mgus2,
+    nrounds = 10
+  )
+  surv_predictions <- predict(mgus2_model, x_mgus2, type = "surv", times= 60)
+  score <- Score(list(model1=1-surv_predictions),Surv(futime,death) ~1 ,data=mgus2,
+           times=60,plots="cal")
+  plotCalibration(score, rug = TRUE)
+}
+```
+
+![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->

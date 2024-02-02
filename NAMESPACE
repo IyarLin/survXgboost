@@ -2,4 +2,3 @@
 
 S3method(predict,xgb.Booster.surv)
 export(xgb.train.surv)
-importFrom(prodlim,Hist)
