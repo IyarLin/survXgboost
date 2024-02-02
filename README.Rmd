@@ -19,7 +19,7 @@ $h(t) = h0(t) * HR$. This quantity is equivalent to the type = "risk" in coxph.
 This package provides a thin wrapper that enables using the xgboost package to 
 perform full survival curve estimation.
 
-See also [discussion](https://datascience.stackexchange.com/questions/65266/how-do-i-predict-survival-curves-using-xgboost) in stackoverflow overflow
+See also [discussion](https://datascience.stackexchange.com/questions/65266/how-do-i-predict-survival-curves-using-xgboost) in stackoverflow
 
 Below is a short usage demo.
 
@@ -74,4 +74,31 @@ risk_scores <- predict(object = surv_xgboost_model, newdata = x_train, type = "r
 hist(risk_scores)
 ```
 
+We can see the package can produce survival estimates that are well calibrated
+
+```{r}
+if(require(riskRegression)){
+  data(cancer, package="survival")
+  status_mgus2 <- ifelse(mgus2$death == 0, -mgus2$futime, mgus2$futime)
+  # We use na.pass since XGBoost can predict for missing data
+  formula_mgus2 <-  ~ age + sex + dxyr + hgb + mspike - 1
+  x_mgus2 <- model.matrix(
+    formula_mgus2,
+    model.frame(formula_mgus2, mgus2, na.action = "na.pass")
+  )
+  # Note: this model is likely overfitting horribly, but that helps demonstrate calibration
+  mgus2_model <- xgb.train.surv(
+    params = list(
+      objective = "survival:cox",
+      eval_metric = "cox-nloglik",
+      eta = 0.2
+    ), data = x_mgus2, label = status_mgus2,
+    nrounds = 10
+  )
+  surv_predictions <- predict(mgus2_model, x_mgus2, type = "surv", times= 60)
+  score <- Score(list(model1=1-surv_predictions),Surv(futime,death) ~1 ,data=mgus2,
+           times=60,plots="cal")
+  plotCalibration(score, rug = TRUE)
+}
+```
 

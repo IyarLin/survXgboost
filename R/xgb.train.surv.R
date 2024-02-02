@@ -25,8 +25,7 @@
 #' @details The xgboost package supports the cox proportional hazards model but the predict method
 #' returns only the risk score (which is equivalent to \eqn{exp(X\beta)} or \code{type = "risk"} in \code{survival::coxph}).
 #' This function returns a \code{xgb.Booster.surv} object which enables prediction of both the risk score as well
-#' the entire survival curve. Baseline hazard rate is obtained using the \code{survival::basehaz} function
-#' which is then scaled to fit the original baseline hazard computed (but not returned) by the \code{xgboost::xgb.train} function
+#' the entire survival curve. Baseline hazard rate is obtained using the \code{survival::survfit} function with stype = 2 to obtain the Breslow estimator
 #' @export
 
 xgb.train.surv <- function(params = list(), data, label, weight = NULL, nrounds,
@@ -52,13 +51,17 @@ xgb.train.surv <- function(params = list(), data, label, weight = NULL, nrounds,
     print_every_n = print_every_n, early_stopping_rounds = early_stopping_rounds, save_period = save_period,
     save_name = "surv_xgboost.model", xgb_model = xgb_model, callbacks = callbacks, ...
   )
-  
+
   # generate baseline hazard
   data_data.frame <- data.frame(data, time = abs(label), status = ifelse(sign(label) == 1, 1, 0))
-  
+
   breslow_estimate <- survival:::survfit(formula = Surv(time, status) ~ 1, data = data_data.frame, stype = 2)
-  
-  xgboost_model$baseline_hazard <- data.frame(hazard = breslow_estimate$cumhaz, time = breslow_estimate$time)
+
+  # Save mean prediction to center linear predictors to 0 (so HRs to 1)
+
+  xgboost_model$mean_prediction <- mean(predict(xgboost_model, data_DMatrix, outputmargin = TRUE))
+
+  xgboost_model$baseline_hazard <- data.frame(hazard = c(0, breslow_estimate$cumhaz), time = c(0, breslow_estimate$time))
   class(xgboost_model) <- c("xgb.Booster.surv", "xgb.Booster")
   return(xgboost_model)
 }
