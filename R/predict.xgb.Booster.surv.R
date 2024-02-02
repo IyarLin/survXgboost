@@ -14,10 +14,10 @@
 #' @export
 
 predict.xgb.Booster.surv <- function(object, newdata, type = "risk", times = NULL) {
-  risk <- xgboost:::predict.xgb.Booster(object, newdata)
   if (type == "risk") {
-    return(risk)
+    return(xgboost:::predict.xgb.Booster(object, newdata))
   } else if (type == "surv") {
+    risk <- xgboost:::predict.xgb.Booster(object, newdata, outputmargin = TRUE)
     if (!is.null(times)) {
       if (max(times) > max(object$baseline_hazard[, 2])) {
         object$baseline_hazard <- rbind(object$baseline_hazard, c(max(object$baseline_hazard[, 1]), max(times)))
@@ -25,8 +25,9 @@ predict.xgb.Booster.surv <- function(object, newdata, type = "risk", times = NUL
     } else {
       times <- object$baseline_hazard[, 2]
     }
-    surv <- exp(risk %*% -matrix(object$baseline_hazard[, 1], nrow = 1))
-    surv <- surv[, findInterval(times, object$baseline_hazard[, 2])]
+    risk <- risk - object$mean_prediction
+    surv <- t(exp(-outer(object$baseline_hazard[,1], exp(risk))))
+    surv <- surv[, findInterval(times, object$baseline_hazard[, 2]), drop = FALSE]
     colnames(surv) <- times
     return(surv)
   } else {

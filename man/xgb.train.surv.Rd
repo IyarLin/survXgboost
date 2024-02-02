@@ -64,8 +64,7 @@ survival curve prediction in addition to the usual relative risk score predictio
 The xgboost package supports the cox proportional hazards model but the predict method
 returns only the risk score (which is equivalent to \eqn{exp(X\beta)} or \code{type = "risk"} in \code{survival::coxph}).
 This function returns a \code{xgb.Booster.surv} object which enables prediction of both the risk score as well
-the entire survival curve. Baseline hazard rate is obtained using the \code{survival::basehaz} function
-which is then scaled to fit the original baseline hazard computed (but not returned) by the \code{xgboost::xgb.train} function
+the entire survival curve. Baseline hazard rate is obtained using the \code{survival::survfit} function with stype = 2 to obtain the Breslow estimator
 }
 \examples{
 library(survival)
