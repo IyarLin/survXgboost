@@ -25,7 +25,6 @@ predict.xgb.Booster.surv <- function(object, newdata, type = "risk", times = NUL
     } else {
       times <- object$baseline_hazard[, 2]
     }
-    risk <- risk - object$mean_prediction
     surv <- t(exp(-outer(object$baseline_hazard[,1], exp(risk))))
     surv <- surv[, findInterval(times, object$baseline_hazard[, 2]), drop = FALSE]
     colnames(surv) <- times

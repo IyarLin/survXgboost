@@ -1,15 +1,14 @@
 survXgboost package
 ================
 Iyar Lin
-02 februari, 2024
+18 juni, 2024
 
 The xgboost package survival model returns predictions on the hazard
-ratio scale (i.e., as \$HR = exp(marginal_prediction) in the
-proportional hazard function
-![h(t) = h0(t) \* HR](https://latex.codecogs.com/png.latex?h%28t%29%20%3D%20h0%28t%29%20%2A%20HR "h(t) = h0(t) * HR").
-This quantity is equivalent to the type = “risk” in coxph. This package
-provides a thin wrapper that enables using the xgboost package to
-perform full survival curve estimation.
+ratio scale (i.e., as
+![HR = exp(marginal_prediction) in the proportional hazard function](https://latex.codecogs.com/png.latex?HR%20%3D%20exp%28marginal_prediction%29%20in%20the%20proportional%20hazard%20function "HR = exp(marginal_prediction) in the proportional hazard function")h(t)
+= h0(t) \* HR\$. This quantity is equivalent to the type = “risk” in
+coxph. This package provides a thin wrapper that enables using the
+xgboost package to perform full survival curve estimation.
 
 See also
 [discussion](https://datascience.stackexchange.com/questions/65266/how-do-i-predict-survival-curves-using-xgboost)
