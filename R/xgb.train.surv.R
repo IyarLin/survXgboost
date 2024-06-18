@@ -53,15 +53,36 @@ xgb.train.surv <- function(params = list(), data, label, weight = NULL, nrounds,
   )
 
   # generate baseline hazard
-  data_data.frame <- data.frame(data, time = abs(label), status = ifelse(sign(label) == 1, 1, 0))
 
-  breslow_estimate <- survival:::survfit(formula = Surv(time, status) ~ 1, data = data_data.frame, stype = 2)
+  times_total <- label
+  events <- times_total > 0
+  times_total <- abs(times_total)
+  times_events <- times_total[events]
+  times_events_unique <- sort(unique(times_events))
+  predictions <- predict(xgboost_model, data_DMatrix, outputmargin = TRUE)
+  haz <- numeric(length(times_events_unique))
+  for(i in seq_along(times_events_unique)){
+    t <- times_events_unique[i]
+    haz[i] = sum(times_events == t) / sum(exp(predictions[times_total >= t]))
+  }
+  cumhaz <- cumsum(haz)
+  if(!0 %in% times_events_unique){
+    cumhaz <- c(0, cumhaz)
+    times_events_unique <- c(0, times_events_unique)
+  }
+  xgboost_model$baseline_hazard <- data.frame(hazard = c(0, cumhaz), time = c(0, times_events_unique))
 
-  # Save mean prediction to center linear predictors to 0 (so HRs to 1)
+  # Alternatetively, use riskRegression to create a baseline hazard
+  # riskRegression can use Efron's correction for tied times
 
-  xgboost_model$mean_prediction <- mean(predict(xgboost_model, data_DMatrix, outputmargin = TRUE))
+  # predictions <- predict(xgboost_model, data_DMatrix, outputmargin = TRUE)
+  # sort_order <- order(abs(label))
+  # predictions <- predictions[sort_order]
+  # label <- label[sort_order]
+  # event_times <- label[label > 0]
+  # basehaz <- riskRegression::baseHaz_cpp(rep(0, length(label)), abs(label), ifelse(label > 0, 1L, 0L), exp(predictions), seq_along(label), unique(event_times), max(event_times), length(label), 1, 1, TRUE)
+  # out$basehaz <- data.frame(hazard = basehaz$cumhazard, time = basehaz$times)
 
-  xgboost_model$baseline_hazard <- data.frame(hazard = c(0, breslow_estimate$cumhaz), time = c(0, breslow_estimate$time))
   class(xgboost_model) <- c("xgb.Booster.surv", "xgb.Booster")
   return(xgboost_model)
 }
